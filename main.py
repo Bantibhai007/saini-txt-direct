@@ -45,73 +45,8 @@ bot = Client(
     bot_token=BOT_TOKEN
 )
 
-# Define aiohttp routes
-routes = web.RouteTableDef()
 
-@routes.get("/", allow_head=True)
-async def root_route_handler(request):
-    return web.json_response("https://text-leech-bot-for-render.onrender.com/")
-
-async def web_server():
-    web_app = web.Application(client_max_size=30000000)
-    web_app.add_routes(routes)
-    return web_app
-
-async def start_bot():
-    await bot.start()
-    print("Bot is up and running")
-
-async def stop_bot():
-    await bot.stop()
-
-async def main():
-    if WEBHOOK:
-        # Start the web server
-        app_runner = web.AppRunner(await web_server())
-        await app_runner.setup()
-        site = web.TCPSite(app_runner, "0.0.0.0", PORT)
-        await site.start()
-        print(f"Web server started on port {PORT}")
-
-    # Start the bot
-    await start_bot()
-
-    # Keep the program running
-    try:
-        while True:
-            await bot.polling()  # Run forever, or until interrupted
-    except (KeyboardInterrupt, SystemExit):
-        await stop_bot()
-    
-
-async def start_bot():
-    await bot.start()
-    print("Bot is up and running")
-
-async def stop_bot():
-    await bot.stop()
-
-async def main():
-    if WEBHOOK:
-        # Start the web server
-        app_runner = web.AppRunner(await web_server())
-        await app_runner.setup()
-        site = web.TCPSite(app_runner, "0.0.0.0", PORT)
-        await site.start()
-        print(f"Web server started on port {PORT}")
-
-    # Start the bot
-    await start_bot()
-
-    # Keep the program running
-    try:
-        while True:
-            await asyncio.sleep(3600)  # Run forever, or until interrupted
-    except (KeyboardInterrupt, SystemExit):
-        await stop_bot()
-        
 import random
-
 # Inline keyboard for start command
 keyboard = InlineKeyboardMarkup(
     [
@@ -121,26 +56,13 @@ keyboard = InlineKeyboardMarkup(
         ],
     ]
 )
-
-# Inline keyboard for busy status
-Busy = InlineKeyboardMarkup(
-    [
-        [
-            InlineKeyboardButton(text="📞 Contact", url="https://t.me/Nikhil_saini_khe"),
-            InlineKeyboardButton(text="🛠️ Help", url="https://t.me/+3k-1zcJxINYwNGZl"),
-        ],
-    ]
-)
-
 # Image URLs for the random image feature
 image_urls = [
     "https://tinypic.host/images/2025/02/07/IMG_20250207_224444_975.jpg",
     "https://tinypic.host/images/2025/02/07/DeWatermark.ai_1738952933236-1.png",
     # Add more image URLs as needed
 ]
-
 cookies_file_path= "youtube_cookies.txt"
-
 @bot.on_message(filters.command(["help"]))
 async def txt_handler(client: Client, m: Message):
     await bot.send_message(m.chat.id, text= (
@@ -158,42 +80,33 @@ async def txt_handler(client: Client, m: Message):
         "**If you have any questions, feel free to ask! 💬**"
         )
     ) 
-
-
 @bot.on_message(filters.command("cookies") & filters.private)
 async def cookies_handler(client: Client, m: Message):
     await m.reply_text(
         "Please upload the cookies file (.txt format).",
         quote=True
     )
-
     try:
         # Wait for the user to send the cookies file
         input_message: Message = await client.listen(m.chat.id)
-
         # Validate the uploaded file
         if not input_message.document or not input_message.document.file_name.endswith(".txt"):
             await m.reply_text("Invalid file type. Please upload a .txt file.")
             return
-
         # Download the cookies file
         downloaded_path = await input_message.download()
-
         # Read the content of the uploaded file
         with open(downloaded_path, "r") as uploaded_file:
             cookies_content = uploaded_file.read()
-
         # Replace the content of the target cookies file
         with open(cookies_file_path, "w") as target_file:
             target_file.write(cookies_content)
-
         await input_message.reply_text(
             "✅ Cookies updated successfully.\n📂 Saved in `youtube_cookies.txt`."
         )
-
     except Exception as e:
         await m.reply_text(f"⚠️ An error occurred: {str(e)}")
-
+m_file_path= "main.py"
 @bot.on_message(filters.command("getcookies") & filters.private)
 async def getcookies_handler(client: Client, m: Message):
     try:
@@ -204,26 +117,19 @@ async def getcookies_handler(client: Client, m: Message):
             caption="Here is the `youtube_cookies.txt` file."
         )
     except Exception as e:
+        await m.reply_text(f"⚠️ An error occurred: {str(e)}")     
+@bot.on_message(filters.command("mfile") & filters.private)
+async def getcookies_handler(client: Client, m: Message):
+    try:
+        await client.send_document(
+            chat_id=m.chat.id,
+            document=m_file_path,
+            caption="Here is the `main.py` file."
+        )
+    except Exception as e:
         await m.reply_text(f"⚠️ An error occurred: {str(e)}")
-        
-# Start command handler
-@bot.on_message(filters.command(["start"]))
-async def start_command(bot: Client, message: Message):
-    random_image_url = random.choice(image_urls)
-    caption = (
-        "𝐇𝐞𝐥𝐥𝐨 𝐃𝐞𝐚𝐫 👋!\n\n➠ 𝐈 𝐚𝐦 𝐚 𝐓𝐞𝐱𝐭 𝐃𝐨𝐰𝐧𝐥𝐨𝐚𝐝𝐞𝐫 𝐁𝐨𝐭\n\n➠ Can Extract Videos & PDFs From Your Text File and Upload to Telegram!\n\n➠ For Guide Use Command /help 📖\n\n➠ 𝐌𝐚𝐝𝐞 𝐁𝐲 : 𝙎𝘼𝙄𝙉𝙄 𝘽𝙊𝙏𝙎 🦁"
-    )
-
-    await bot.send_photo(
-        chat_id=message.chat.id,
-        photo=random_image_url,
-        caption=caption,
-        reply_markup=keyboard
-    )
-
 @bot.on_message(filters.private & filters.command(["info"]))
-async def info(bot: Client, update: Message):
-    
+async def info(bot: Client, update: Message):    
     text = (
         f"╭────────────────╮\n"
         f"│✨ **__Your Telegram Info__**✨ \n"
@@ -233,23 +139,18 @@ async def info(bot: Client, update: Message):
         f"├🔹**TG ID :** `{update.from_user.id}`\n"
         f"├🔹**Profile :** {update.from_user.mention}\n"
         f"╰────────────────╯"
-    )
-    
+    )    
     await update.reply_text(        
         text=text,
         disable_web_page_preview=True,
         reply_markup=BUTTONS
     )
-
 BUTTONS = InlineKeyboardMarkup([[InlineKeyboardButton(text="📞 Contact", url=f"https://t.me/+-UUAslfhnugyZjZl")]])
-
 # /id Command - Show Group/Channel ID
 @bot.on_message(filters.command(["id"]))
 async def id_command(client, message: Message):
     chat_id = message.chat.id
     await message.reply_text(f"**ID : `{chat_id}`**\n\n")
-
-
 @bot.on_message(filters.command(["logs"]) )
 async def send_logs(bot: Client, m: Message):
     try:
@@ -259,7 +160,19 @@ async def send_logs(bot: Client, m: Message):
             await sent.delete(True)
     except Exception as e:
         await m.reply_text(f"Error sending logs: {e}")
-
+# Start command handler
+@bot.on_message(filters.command(["start"]))
+async def start_command(bot: Client, message: Message):
+    random_image_url = random.choice(image_urls)
+    caption = (
+        "𝐇𝐞𝐥𝐥𝐨 𝐃𝐞𝐚𝐫 👋!\n\n➠ 𝐈 𝐚𝐦 𝐚 𝐓𝐞𝐱𝐭 𝐃𝐨𝐰𝐧𝐥𝐨𝐚𝐝𝐞𝐫 𝐁𝐨𝐭\n\n➠ Can Extract Videos & PDFs From Your Text File and Upload to Telegram!\n\n➠ For Guide Use Command /help 📖\n\n➠ 𝐌𝐚𝐝𝐞 𝐁𝐲 : 𝙎𝘼𝙄𝙉𝙄 𝘽𝙊𝙏𝙎 🦁"
+    )
+    await bot.send_photo(
+        chat_id=message.chat.id,
+        photo=random_image_url,
+        caption=caption,
+        reply_markup=keyboard
+    )
 @bot.on_message(filters.command(["stop"]) )
 async def restart_handler(_, m):
     await m.reply_text("**ˢᵗᵒᵖᵖᵉᵈ ᵇᵃᵇʸ**", True)
@@ -327,7 +240,7 @@ async def youtube_to_txt(client, message: Message):
 
     # Remove the temporary text file after sending
     os.remove(txt_file)
-
+    
 @bot.on_message(filters.command(["drm"]) )
 async def txt_handler(bot: Client, m: Message):
     editable = await m.reply_text(f"<pre><code>🔹Hi I am Poweful TXT Downloader📥 Bot.\n🔹Send me the txt file and wait.</code></pre>")
@@ -373,6 +286,12 @@ async def txt_handler(bot: Client, m: Message):
         arg = int(raw_text)
     except:
         arg = 1
+
+    await editable.edit(f"`🔹Total 🔗 links found are {len(links)}\n\n🔹Starting from {raw_text}\n\n🔹Send till you want to download.`")
+    inputend: Message = await bot.listen(editable.chat.id)
+    raw_textend = inputend.text
+    await inputend.delete(True)
+        
     await editable.edit("<pre><code>Enter Your Batch Name\nSend 1 for use default.</code></pre>")
     input1: Message = await bot.listen(editable.chat.id)
     raw_text0 = input1.text
@@ -382,6 +301,11 @@ async def txt_handler(bot: Client, m: Message):
     else:
         b_name = raw_text0
 
+    await editable.edit("<pre><code>Enter Your App Name.</code></pre>")
+    input5: Message = await bot.listen(editable.chat.id)
+    a_name = input5.text
+    await input5.delete(True)
+        
     await editable.edit("╭━━━━❰ᴇɴᴛᴇʀ ʀᴇꜱᴏʟᴜᴛɪᴏɴ❱━━➣ \n┣━━⪼ send `144`  for 144p\n┣━━⪼ send `240`  for 240p\n┣━━⪼ send `360`  for 360p\n┣━━⪼ send `480`  for 480p\n┣━━⪼ send `720`  for 720p\n┣━━⪼ send `1080` for 1080p\n╰━━⌈⚡[`🦋🇸‌🇦‌🇮‌🇳‌🇮‌🦋`]⚡⌋━━➣")
     input2: Message = await bot.listen(editable.chat.id)
     raw_text2 = input2.text
@@ -445,10 +369,11 @@ async def txt_handler(bot: Client, m: Message):
         f"<pre><code>🎯Target Batch : {b_name}</code></pre>"
     )
 
+    end =int(raw_textend)
     failed_count = 0
     count =int(raw_text)    
     try:
-        for i in range(arg-1, len(links)):
+        for i in range(arg-1, end):
             Vxy = links[i][1].replace("file/d/","uc?export=download&id=").replace("www.youtube-nocookie.com/embed", "youtu.be").replace("?modestbranding=1", "").replace("/view?usp=sharing","")
             url = "https://" + Vxy
             link0 = "https://" + Vxy
@@ -505,12 +430,12 @@ async def txt_handler(bot: Client, m: Message):
                 cmd = f'yt-dlp -f "{ytf}" "{url}" -o "{name}.mp4"'
 
             try:  
-                cc = f'[——— ✨ {str(count).zfill(3)} ✨ ———]({link0})\n\n🎞️𝐓𝐢𝐭𝐥𝐞 » `{name1} [{res}] .mp4`\n\n<pre><code>📚 Course : {b_name}</code></pre>\n\n🌟𝐄𝐱𝐭𝐫𝐚𝐜𝐭𝐞𝐝 𝐁𝐲 » `{CR}`\n'
-                cc1 = f'[——— ✨ {str(count).zfill(3)} ✨ ———]({link0})\n\n📕𝐓𝐢𝐭𝐥𝐞 » `{name1} .pdf`\n\n<pre><code>📚 Course : {b_name}</code></pre>\n\n🌟𝐄𝐱𝐭𝐫𝐚𝐜𝐭𝐞𝐝 𝐁𝐲 » `{CR}`\n'
-                cczip = f'[——— ✨ {str(count).zfill(3)} ✨ ———]({link0})\n\n📁𝐓𝐢𝐭𝐥𝐞 » `{name1} .zip`\n\n<pre><code>📚 Course : {b_name}</code></pre>\n\n🌟𝐄𝐱𝐭𝐫𝐚𝐜𝐭𝐞𝐝 𝐁𝐲 » `{CR}`\n'  
-                ccimg = f'[——— ✨ {str(count).zfill(3)} ✨ ———]({link0})\n\n🖼️𝐓𝐢𝐭𝐥𝐞 » `{name1} .jpg`\n\n<pre><code>📚 Course : {b_name}</code></pre>\n\n🌟𝐄𝐱𝐭𝐫𝐚𝐜𝐭𝐞𝐝 𝐁𝐲 » `{CR}`\n'
-                cccpvod = f'[——— ✨ {str(count).zfill(3)} ✨ ———]({link0})\n\n🎞️𝐓𝐢𝐭𝐥𝐞 » `{name1} .mp4`\n\n<a href="{urlcpvod}">__**Click Here to Watch Stream**__</a>\n🔗𝐋𝐢𝐧𝐤 » {link0}\n\n<pre><code>📚 Course : {b_name}</code></pre>\n\n🌟𝐄𝐱𝐭𝐫𝐚𝐜𝐭𝐞𝐝 𝐁𝐲 » `{CR}`\n'
-                ccyt = f'[——— ✨ {str(count).zfill(3)} ✨ ———]({link0})\n\n🎞️𝐓𝐢𝐭𝐥𝐞 » `{name1} .mp4`\n\n<a href="{url}">__**Click Here to Watch Stream**__</a>\n\n<pre><code>📚 Course : {b_name}</code></pre>\n\n🌟𝐄𝐱𝐭𝐫𝐚𝐜𝐭𝐞𝐝 𝐁𝐲 » `{CR}`\n'
+                cc = f'•——— `{a_name}` ———•\n\n[——— ✨ {str(count).zfill(3)} ✨ ———]({link0})\n\n🎞️𝐓𝐢𝐭𝐥𝐞 » `{name1} [{res}] .mp4`\n\n<pre><code>📚 Course : {b_name}</code></pre>\n\n🌟𝐄𝐱𝐭𝐫𝐚𝐜𝐭𝐞𝐝 𝐁𝐲 » `{CR}`\n'
+                cc1 = f'•——— `{a_name}` ———•\n\n[——— ✨ {str(count).zfill(3)} ✨ ———]({link0})\n\n📕𝐓𝐢𝐭𝐥𝐞 » `{name1} .pdf`\n\n<pre><code>📚 Course : {b_name}</code></pre>\n\n🌟𝐄𝐱𝐭𝐫𝐚𝐜𝐭𝐞𝐝 𝐁𝐲 » `{CR}`\n'
+                cczip = f'•——— `{a_name}` ———•\n\n[——— ✨ {str(count).zfill(3)} ✨ ———]({link0})\n\n📁𝐓𝐢𝐭𝐥𝐞 » `{name1} .zip`\n\n<pre><code>📚 Course : {b_name}</code></pre>\n\n🌟𝐄𝐱𝐭𝐫𝐚𝐜𝐭𝐞𝐝 𝐁𝐲 » `{CR}`\n'  
+                ccimg = f'•——— `{a_name}` ———•\n\n[——— ✨ {str(count).zfill(3)} ✨ ———]({link0})\n\n🖼️𝐓𝐢𝐭𝐥𝐞 » `{name1} .jpg`\n\n<pre><code>📚 Course : {b_name}</code></pre>\n\n🌟𝐄𝐱𝐭𝐫𝐚𝐜𝐭𝐞𝐝 𝐁𝐲 » `{CR}`\n'
+                cccpvod = f'•——— `{a_name}` ———•\n\n[——— ✨ {str(count).zfill(3)} ✨ ———]({link0})\n\n🎞️𝐓𝐢𝐭𝐥𝐞 » `{name1} .mp4`\n\n<a href="{urlcpvod}">__**Click Here to Watch Stream**__</a>\n🔗𝐋𝐢𝐧𝐤 » {link0}\n\n<pre><code>📚 Course : {b_name}</code></pre>\n\n🌟𝐄𝐱𝐭𝐫𝐚𝐜𝐭𝐞𝐝 𝐁𝐲 » `{CR}`\n'
+                ccyt = f'•——— `{a_name}` ———•\n\n[——— ✨ {str(count).zfill(3)} ✨ ———]({link0})\n\n🎞️𝐓𝐢𝐭𝐥𝐞 » `{name1} .mp4`\n\n<a href="{url}">__**Click Here to Watch Stream**__</a>\n\n<pre><code>📚 Course : {b_name}</code></pre>\n\n🌟𝐄𝐱𝐭𝐫𝐚𝐜𝐭𝐞𝐝 𝐁𝐲 » `{CR}`\n'
                                  
                 if "drive" in url:
                     try:
@@ -590,19 +515,20 @@ async def txt_handler(bot: Client, m: Message):
                         count += 1
                         continue
 
-                elif ".jpg" in url or ".png" in url:
+                elif any(ext in url for ext in [".jpg", ".jpeg", ".png"]):
                     try:
-                        cmd = f'yt-dlp -o "{name}.jpg" "{url}"'
+                        ext = url.split('.')[-1]
+                        cmd = f'yt-dlp -o "{name}.{ext}" "{url}"'
                         download_cmd = f"{cmd} -R 25 --fragment-retries 25"
                         os.system(download_cmd)
-                        copy = await bot.send_photo(chat_id=m.chat.id, document=f'{name}.jpg', caption=ccimg)
+                        copy = await bot.send_photo(chat_id=m.chat.id, photo=f'{name}.{ext}', caption=cc1)
                         count += 1
-                        os.remove(f'{name}.jpg')
+                        os.remove(f'{name}.{ext}')
                     except FloodWait as e:
                         await m.reply_text(str(e))
                         time.sleep(e.x)
                         count += 1
-                        continue
+                        continue 
 
                 elif "cpvod.testbook.com" in url:
                     try:
@@ -623,19 +549,21 @@ async def txt_handler(bot: Client, m: Message):
                         continue
      
                 else:
-                    remaining_links = len(links) - count
-                    progress = (count / len(links)) * 100
+                    remaining_links = end - count
+                    progress = (count / end) * 100
                     emoji_message = await show_random_emojis(message)
                     Show = f"🚀𝐏𝐑𝐎𝐆𝐑𝐄𝐒𝐒 » {progress:.2f}%\n┃\n" \
-                           f"┣🔗𝐈𝐧𝐝𝐞𝐱 » {str(count)}/{len(links)}\n┃\n" \
+                           f"┣🔗𝐈𝐧𝐝𝐞𝐱 » {str(count)}/{end} : {len(links)}\n┃\n" \
                            f"╰━🖇️𝐑𝐞𝐦𝐚𝐢𝐧𝐢𝐧𝐠 𝐋𝐢𝐧𝐤𝐬 » {remaining_links}\n" \
                            f"━━━━━━━━━━━━━━━━━━━━━━━━\n" \
                            f"**⚡Dᴏᴡɴʟᴏᴀᴅ Sᴛᴀʀᴛᴇᴅ...⏳**\n" \
+                           f'┣💃𝐂𝐫𝐞𝐝𝐢𝐭 » `{CR}`\n┃\n' \
+                           f'╰━📚𝐁𝐚𝐭𝐜𝐡 𝐍𝐚𝐦𝐞 » `{b_name}`\n\n' \
                            f"━━━━━━━━━━━━━━━━━━━━━━━━\n" \
                            f"📚𝐓𝐢𝐭𝐥𝐞 » `{name}`\n┃\n" \
                            f"┣🍁𝐐𝐮𝐚𝐥𝐢𝐭𝐲 » {raw_text2}p\n┃\n" \
                            f'┣━🔗𝐋𝐢𝐧𝐤 » <a href="{link0}">__**Original Link**__</a>\n┃\n' \
-                           f'┣━━🖇️𝐔𝐑𝐋 » <a href="{url}">__**Check URL**__</a>\n┃\n' \
+                           f'┣━━🖇️𝐔𝐑𝐋 » <a href="{url}">__**Modified Link**__</a>\n┃\n' \
                            f'╰━━━🖼️𝐓𝐡𝐮𝐦𝐛𝐧𝐚𝐢𝐥 » <a href="{raw_text6}">__**Thumb Link**__</a>\n' \
                            f"━━━━━━━━━━━━━━━━━━━━━━━━\n" \
                            f"🛑**Send** /stop **to stop process**\n" \
@@ -650,9 +578,7 @@ async def txt_handler(bot: Client, m: Message):
                     time.sleep(1)
 
             except Exception as e:
-                await m.reply_text(
-                    f'——— ✨ [{str(count).zfill(3)}]({link0}) ✨ ———\n\n📔𝐓𝐢𝐭𝐥𝐞 » `{name}`\n🔗𝐋𝐢𝐧𝐤 » <a href="{link0}">__**Click Here to check manually**__</a>\n\n✦𝐁𝐨𝐭 𝐌𝐚𝐝𝐞 𝐁𝐲 ✦ `🇸‌🇦‌🇮‌🇳‌🇮‌🐦`'
-                )
+                await bot.send_photo(chat_id=m.chat.id, photo=photologo, caption=f'——— ✨ [{str(count).zfill(3)}]({link0}) ✨ ———\n\n📔𝐓𝐢𝐭𝐥𝐞 » `{name}`\n\n🔗𝐋𝐢𝐧𝐤 » <a href="{link0}">__**Click Here to check manually**__</a>\n\n✦𝐁𝐨𝐭 𝐌𝐚𝐝𝐞 𝐁𝐲 ✦ `🇸‌🇦‌🇮‌🇳‌🇮‌🐦`')
                 count += 1
                 failed_count += 1
                 continue
@@ -661,7 +587,7 @@ async def txt_handler(bot: Client, m: Message):
         await m.reply_text(e)
     await m.reply_text(f"`✨𝙱𝚊𝚝𝚌𝚑 𝚂𝚞𝚖𝚖𝚊𝚛𝚢✨\n"
                        f"▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n"
-                       f"🔢𝙸𝚗𝚍𝚎𝚡 𝚁𝚊𝚗𝚐𝚎 » ({raw_text} to {len(links)})\n"
+                       f"🔢𝙸𝚗𝚍𝚎𝚡 𝚁𝚊𝚗𝚐𝚎 » {raw_text} ➠ {end}\n"
                        f"📚𝙱𝚊𝚝𝚌𝚑 𝙽𝚊𝚖𝚎 » {b_name}\n"
                        f"▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n"
                        f"✨𝚃𝚡𝚝 𝚂𝚞𝚖𝚖𝚊𝚛𝚢✨ : {len(links)}\n"
